@@ -1,0 +1,36 @@
+# Production stack: nat-server behind Caddy, which obtains and renews the
+# HTTPS certificate for your domain automatically.
+#
+#   cp .env.example .env    # then set DOMAIN
+#   docker compose up -d --build
+
+services:
+  nat-server:
+    build: .
+    restart: unless-stopped
+    environment:
+      RUST_LOG: ${RUST_LOG:-nat_server=info}
+      MAX_CONNECTIONS: ${MAX_CONNECTIONS:-5000}
+      REQUEST_TIMEOUT_SECS: ${REQUEST_TIMEOUT_SECS:-60}
+    # Not published to the internet; only Caddy talks to it.
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - nat-server
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,6 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	# WebSocket upgrades are proxied automatically.
+	reverse_proxy nat-server:8080
+}
