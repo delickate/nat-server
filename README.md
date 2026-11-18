@@ -69,10 +69,9 @@ Port 8080 does **not** need to be open; only Caddy talks to it.
 
 ### Step 5: Upload the code
 
-**Option A: Git (recommended).** Push this folder to a private GitHub/GitLab
-repository, then on the VPS:
+**Option A: Git (recommended).** On the VPS:
 ```bash
-git clone https://github.com/<you>/nat-server.git /opt/nat-server
+git clone https://github.com/delickate/nat-server.git /opt/nat-server
 cd /opt/nat-server
 ```
 
@@ -148,6 +147,39 @@ The server address is shown at the bottom-right of the app window.
 
 Screen sharing and remote control are the next development steps; this
 release establishes the approved connection between the two PCs.
+
+---
+
+## Deploying behind a hosting panel (CloudPanel etc.)
+
+If your server is managed with a panel that already serves ports 80/443, skip
+Caddy and let the panel do HTTPS:
+
+1. In the panel, add a site of type **Reverse Proxy**:
+   * Domain: `natserver.sanjakarobar.com`
+   * Reverse proxy URL: `http://127.0.0.1:8080`
+2. Issue a free **Let's Encrypt** certificate for the site from the panel (SSL/TLS tab).
+3. Over SSH as root:
+   ```bash
+   curl -fsSL https://get.docker.com | sh      # skip if Docker is installed
+   git clone https://github.com/delickate/nat-server.git /opt/nat-server
+   cd /opt/nat-server
+   docker compose -f docker-compose.proxy.yml up -d --build
+   curl http://127.0.0.1:8080/health           # should print "status":"ok"
+   ```
+4. Make sure the site's Nginx config (the panel's **Vhost** editor) forwards
+   WebSocket upgrades. Inside the `location /` block that contains
+   `proxy_pass`, these lines must be present; add any that are missing and save:
+   ```nginx
+   proxy_http_version 1.1;
+   proxy_set_header Upgrade $http_upgrade;
+   proxy_set_header Connection "upgrade";
+   proxy_read_timeout 120s;
+   ```
+5. Open `https://natserver.sanjakarobar.com/health`; it should show `"status":"ok"`.
+6. The app's server address is `wss://natserver.sanjakarobar.com/ws`.
+
+Updating later: `cd /opt/nat-server && git pull && docker compose -f docker-compose.proxy.yml up -d --build`
 
 ---
 

@@ -1,0 +1,18 @@
+# Use this when a hosting panel (CloudPanel, aaPanel, Plesk, ...) or your own
+# Nginx already serves ports 80/443 and handles HTTPS. Only nat-server runs
+# here, listening on 127.0.0.1:8080 so it is reachable only through the proxy.
+#
+#   docker compose -f docker-compose.proxy.yml up -d --build
+#
+# Then create a "Reverse Proxy" site in the panel pointing to http://127.0.0.1:8080
+
+services:
+  nat-server:
+    build: .
+    restart: unless-stopped
+    environment:
+      RUST_LOG: ${RUST_LOG:-nat_server=info}
+      MAX_CONNECTIONS: ${MAX_CONNECTIONS:-5000}
+      REQUEST_TIMEOUT_SECS: ${REQUEST_TIMEOUT_SECS:-60}
+    ports:
+      - "127.0.0.1:8080:8080"
