@@ -4,7 +4,8 @@
 #
 #   docker compose -f docker-compose.proxy.yml up -d --build
 #
-# Then create a "Reverse Proxy" site in the panel pointing to http://127.0.0.1:8080
+# Then create a "Reverse Proxy" site in the panel pointing to
+# http://127.0.0.1:<HOST_PORT>. Set HOST_PORT in .env if 8080 is already taken.
 
 services:
   nat-server:
@@ -15,4 +16,4 @@ services:
       MAX_CONNECTIONS: ${MAX_CONNECTIONS:-5000}
       REQUEST_TIMEOUT_SECS: ${REQUEST_TIMEOUT_SECS:-60}
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:${HOST_PORT:-8080}:8080"

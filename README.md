@@ -164,8 +164,11 @@ Caddy and let the panel do HTTPS:
    curl -fsSL https://get.docker.com | sh      # skip if Docker is installed
    git clone https://github.com/delickate/nat-server.git /opt/nat-server
    cd /opt/nat-server
+   ss -ltn | grep ':8080 '                     # any output = 8080 is taken
+   # If taken: pick a free port (e.g. 8095), put HOST_PORT=8095 in .env,
+   # and use http://127.0.0.1:8095 as the site's reverse proxy URL.
    docker compose -f docker-compose.proxy.yml up -d --build
-   curl http://127.0.0.1:8080/health           # should print "status":"ok"
+   curl http://127.0.0.1:8080/health           # (or your HOST_PORT) → "status":"ok"
    ```
 4. Make sure the site's Nginx config (the panel's **Vhost** editor) forwards
    WebSocket upgrades. Inside the `location /` block that contains
