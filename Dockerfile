@@ -2,14 +2,21 @@
 FROM rust:1-bookworm AS build
 WORKDIR /app
 
-# Cache dependencies separately from the source.
+# Cache dependencies separately from the source: build once with placeholder
+# sources, then throw away everything Cargo built for this crate itself.
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs && echo "" > src/lib.rs \
     && cargo build --release --locked \
-    && rm -rf src target/release/deps/nat_server* target/release/nat-server*
+    && rm -rf src \
+        target/release/nat-server* \
+        target/release/deps/nat_server* \
+        target/release/deps/libnat_server* \
+        target/release/.fingerprint/nat-server-*
 
 COPY src ./src
-RUN cargo build --release --locked
+# COPY keeps the files' original timestamps, which can be older than the
+# placeholder build; touch them so Cargo always recompiles the real code.
+RUN touch src/*.rs && cargo build --release --locked
 
 # --- runtime -------------------------------------------------------------
 FROM debian:bookworm-slim
